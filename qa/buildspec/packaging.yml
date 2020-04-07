@@ -1,11 +1,17 @@
 
 version: 0.2
 
+env:
+  variables:
+    BUILD_CORES: "4"
+    LIBHTP_BRANCH: "0.5.x"
+
 phases:
   pre_build:
     commands:
-      - echo Downloading source code 
-      - git clone https://github.com/OISF/libhtp -b 0.5.x
+      - echo Downloading source code
+      - export BUILD_CORES=$(nproc)
+      - git clone --depth 1 https://github.com/OISF/libhtp -b ${LIBHTP_BRANCH}
       - |
           cd suricata-update
           curl -L \
@@ -15,12 +21,12 @@ phases:
       - echo Generating build files
       - ./autogen.sh
       - echo Configuring the make and make install
-      - ./configure --disable-gccmarch-native --enable-unittests --prefix=/usr --sysconfdir=/etc --localstatedir=/var
+      - ./configure --disable-gccmarch-native --prefix=/usr --sysconfdir=/etc --localstatedir=/var
   build:
     commands:
       - echo Running install
-      - echo CPU count $(nproc) 
-      - make -j$(nproc)
+      - echo CPU count ${BUILD_CORES}
+      - make -j${BUILD_CORES}
       - make install DESTDIR=${CODEBUILD_SRC_DIR}/rpm
       - make install-conf DESTDIR=${CODEBUILD_SRC_DIR}/rpm
   post_build:
